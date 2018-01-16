@@ -1,0 +1,14 @@
+env: ($ environment $)
+terraform_storage_access_key: ...
+terraform_storage_secret_key: ...
+terraform_storage_bucket_name: elk-terraform-remote-state
+terraform_storage_bucket_path: elk/($ environment $)
+aws_access_key: ...
+aws_secret_key: ...
+aws_default_region: eu-west-1
+
+elk_config_git_repository: git@github.com:MyUser/config-elk.git
+elk_config_git_branch: master
+elk_config_git_private_key: |-
+  -----BEGIN RSA PRIVATE KEY-----
+  -----END RSA PRIVATE KEY-----

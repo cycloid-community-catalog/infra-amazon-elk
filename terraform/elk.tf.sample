@@ -1,0 +1,19 @@
+module "elk" {
+  source = "module-elk"
+
+  env                      = "($ environment $)"
+  vpc_id                   = "<vpc-id>"
+  subnet_ids               = ["<subnet-ids>"]
+  
+  #project = "<project name>"
+  #allowed_secgroup = "<allowed sec group ID>"
+  #es_volume_size = "<size of elasticsearch volume>"
+
+  # https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-managedomains.html#es-managedomains-zoneawareness
+  #es_zone_awareness_enabled = "<bool: enable or not awareness zone>"
+  #es_version = "<version of elasticsearch>"
+  #es_instance_type_ = "<type of instance>"
+  #es_instance_count = "<number of instances in the cluster>"
+  #es_automated_snapshot_start_hour = "<int: start hour of the snapshot>"
+
+}

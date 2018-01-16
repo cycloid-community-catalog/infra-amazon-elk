@@ -1,0 +1,152 @@
+groups:
+
+- name: elk-((env))
+  jobs:
+  - terraform-plan-elk-((env))
+  - terraform-apply-elk-((env))
+
+resource_types:
+
+- name: terraform
+  type: docker-image
+  source:
+    repository: ljfranklin/terraform-resource
+
+resources:
+
+- name: terraform-elk-((env))
+  type: terraform
+  source:
+    storage:
+      bucket: ((terraform_storage_bucket_name))
+      bucket_path: ((terraform_storage_bucket_path))
+      region_name: ((aws_default_region))
+      access_key_id: ((terraform_storage_access_key))
+      secret_access_key: ((terraform_storage_secret_key))
+    vars:
+      access_key: ((aws_access_key))
+      secret_key: ((aws_secret_key))
+    env:
+      AWS_ACCESS_KEY_ID: ((aws_access_key))
+      AWS_DEFAULT_REGION: ((aws_default_region))
+      AWS_SECRET_ACCESS_KEY: ((aws_secret_key))
+
+- name: stack-elk-terraform
+  type: git
+  source:
+    uri: https://github.com/cycloid-community-catalog/stack-amazon-elk
+    branch: master
+    check_every: 2m
+    path: /terraform/
+
+- name: stack-config-terraform
+  type: git
+  source:
+    uri: ((elk_config_git_repository))
+    branch: ((elk_config_git_branch))
+    check_every: 2m
+    private_key: ((elk_config_git_private_key))
+    path: /terraform/
+
+jobs:
+  - name: terraform-plan-elk-((env))
+    max_in_flight: 1
+    build_logs_to_retain: 10
+    plan:
+      - do:
+        - get: stack-elk-terraform
+          trigger: true
+        - get: stack-config-terraform
+          trigger: true
+
+        - task: merge-stack-and-config
+          config:
+            platform: linux
+            image_resource:
+              type: docker-image
+              source:
+                repository: cycloid/busybox
+                tag: latest
+            run:
+              path: /bin/sh
+              args:
+              - -xec
+              - |
+                cp -av stack/terraform/. merged-stack/
+                if [ -d "config/${CONFIG_PATH}" ]; then
+                  cp -av config/${CONFIG_PATH}/. merged-stack/
+                fi
+                echo "############ extract tag for the image : <stack_id>-<config_id>"
+                echo "$(git --git-dir=stack/.git rev-parse --verify HEAD --short)-$(git --git-dir=config/.git rev-parse --verify HEAD --short)" | tee merged-stack/tag
+            inputs:
+            - name: stack-config-terraform
+              path: "config"
+            - name: stack-elk-terraform
+              path: "stack"
+            outputs:
+            - name: merged-stack
+              path: "merged-stack"
+          params:
+            CONFIG_PATH: terraform/((env))
+
+
+        - put: terraform-elk-((env))
+          params:
+            env_name: elk-((env))
+            plan_only: true
+            terraform_source: merged-stack/
+
+  - name: terraform-apply-elk-((env))
+    build_logs_to_retain: 10
+    plan:
+      - do:
+        # Trigger false because of manual approval
+        - get: stack-elk-terraform
+          trigger: false
+          passed:
+            - terraform-plan-elk-((env))
+        - get: stack-config-terraform
+          trigger: false
+          passed:
+            - terraform-plan-elk-((env))
+        - get: terraform-elk-((env))
+          trigger: false
+          passed:
+            - terraform-plan-elk-((env))
+
+        - task: merge-stack-and-config
+          config:
+            platform: linux
+            image_resource:
+              type: docker-image
+              source:
+                repository: cycloid/busybox
+                tag: latest
+            run:
+              path: /bin/sh
+              args:
+              - -xec
+              - |
+                cp -av stack/terraform/. merged-stack/
+                if [ -d "config/${CONFIG_PATH}" ]; then
+                  cp -av config/${CONFIG_PATH}/. merged-stack/
+                fi
+                echo "############ extract tag for the image : <stack_id>-<config_id>"
+                echo "$(git --git-dir=stack/.git rev-parse --verify HEAD --short)-$(git --git-dir=config/.git rev-parse --verify HEAD --short)" | tee merged-stack/tag
+            inputs:
+            - name: stack-config-terraform
+              path: "config"
+            - name: stack-elk-terraform
+              path: "stack"
+            outputs:
+            - name: merged-stack
+              path: "merged-stack"
+          params:
+            CONFIG_PATH: terraform/((env))
+
+
+        - put: terraform-elk-((env))
+          params:
+            env_name: elk-((env))
+            run_plan: true
+            terraform_source: merged-stack/
