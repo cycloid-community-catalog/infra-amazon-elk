@@ -7,7 +7,7 @@ keywords:
   - 'kibana'
   - 'aws'
 author: 'Cycloid'
-image: 'https://raw.githubusercontent.com/cycloid-community-catalog/infra-amazon-elk/blob/master/icon.png'
+image: 'https://raw.githubusercontent.com/cycloid-community-catalog/infra-amazon-elk/master/icon.png'
 type: 'infra'
 config:
   # Configuration of the CI pipeline
