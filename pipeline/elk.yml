@@ -36,7 +36,6 @@ resources:
   source:
     uri: https://github.com/cycloid-community-catalog/stack-amazon-elk
     branch: master
-    check_every: 2m
     path: /terraform/
 
 - name: stack-config-terraform
@@ -44,7 +43,6 @@ resources:
   source:
     uri: ((elk_config_git_repository))
     branch: ((elk_config_git_branch))
-    check_every: 2m
     private_key: ((elk_config_git_private_key))
     path: /terraform/
 
