@@ -1,3 +1,19 @@
+shared:
+
+  # Task : sync and merge with rsync 2 rep. Used to merge stack and config
+  - &merge-stack-and-config
+    platform: linux
+    image_resource:
+      type: docker-image
+      source:
+        repository: cycloid/cycloid-toolkit
+        tag: latest
+    run:
+      path: /usr/bin/merge-stack-and-config
+    outputs:
+    - name: merged-stack
+      path: "merged-stack"
+
 groups:
 
 - name: elk-((env))
@@ -59,34 +75,15 @@ jobs:
 
         - task: merge-stack-and-config
           config:
-            platform: linux
-            image_resource:
-              type: docker-image
-              source:
-                repository: cycloid/busybox
-                tag: latest
-            run:
-              path: /bin/sh
-              args:
-              - -xec
-              - |
-                cp -av stack/terraform/. merged-stack/
-                if [ -d "config/${CONFIG_PATH}" ]; then
-                  cp -av config/${CONFIG_PATH}/. merged-stack/
-                fi
-                echo "############ extract tag for the image : <stack_id>-<config_id>"
-                echo "$(git --git-dir=stack/.git rev-parse --verify HEAD --short)-$(git --git-dir=config/.git rev-parse --verify HEAD --short)" | tee merged-stack/tag
+            <<: *merge-stack-and-config
             inputs:
             - name: stack-config-terraform
               path: "config"
             - name: stack-elk-terraform
               path: "stack"
-            outputs:
-            - name: merged-stack
-              path: "merged-stack"
           params:
             CONFIG_PATH: terraform/((env))
-
+            STACK_PATH: terraform
 
         - put: terraform-elk-((env))
           params:
@@ -114,34 +111,15 @@ jobs:
 
         - task: merge-stack-and-config
           config:
-            platform: linux
-            image_resource:
-              type: docker-image
-              source:
-                repository: cycloid/busybox
-                tag: latest
-            run:
-              path: /bin/sh
-              args:
-              - -xec
-              - |
-                cp -av stack/terraform/. merged-stack/
-                if [ -d "config/${CONFIG_PATH}" ]; then
-                  cp -av config/${CONFIG_PATH}/. merged-stack/
-                fi
-                echo "############ extract tag for the image : <stack_id>-<config_id>"
-                echo "$(git --git-dir=stack/.git rev-parse --verify HEAD --short)-$(git --git-dir=config/.git rev-parse --verify HEAD --short)" | tee merged-stack/tag
+            <<: *merge-stack-and-config
             inputs:
             - name: stack-config-terraform
               path: "config"
             - name: stack-elk-terraform
               path: "stack"
-            outputs:
-            - name: merged-stack
-              path: "merged-stack"
           params:
             CONFIG_PATH: terraform/((env))
-
+            STACK_PATH: terraform
 
         - put: terraform-elk-((env))
           params:
