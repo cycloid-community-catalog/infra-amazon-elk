@@ -4,38 +4,40 @@
 
 ###
 
-
 resource "aws_elasticsearch_domain" "es" {
-    domain_name = "${var.project}-${var.env}"
-    # EBS storage must be selected for t2.small.elasticsearch
-    ebs_options {
-      ebs_enabled = true
-      volume_size = "${var.es_volume_size}"
-    }
-    elasticsearch_version = "${var.es_version}"
+  domain_name = "${var.project}-${var.env}"
 
-    cluster_config {
-      instance_count = "${var.es_instance_count}"
-      instance_type = "${var.es_instance_type}"
-      zone_awareness_enabled = "${var.es_zone_awareness_enabled}"
-    }
+  # EBS storage must be selected for t2.small.elasticsearch
+  ebs_options {
+    ebs_enabled = true
+    volume_size = "${var.es_volume_size}"
+  }
 
-    snapshot_options {
-        automated_snapshot_start_hour = "${var.es_automated_snapshot_start_hour}"
-    }
+  elasticsearch_version = "${var.es_version}"
 
-    vpc_options {
-        security_group_ids = ["${aws_security_group.es.id}"]
-        subnet_ids         = ["${var.subnet_ids}"]
-    }
+  cluster_config {
+    instance_count         = "${var.es_instance_count}"
+    instance_type          = "${var.es_instance_type}"
+    zone_awareness_enabled = "${var.es_zone_awareness_enabled}"
+  }
 
-    tags {
-      engine  = "cycloid.io"
-      role    = "es"
-      Name    = "${var.project}-es-${var.env}"
-      env     = "${var.env}"
-      project = "${var.project}"
-    }
+  snapshot_options {
+    automated_snapshot_start_hour = "${var.es_automated_snapshot_start_hour}"
+  }
+
+  vpc_options {
+    security_group_ids = ["${aws_security_group.es.id}"]
+    subnet_ids         = ["${var.subnet_ids}"]
+  }
+
+  tags {
+    cycloid.io = "true"
+    role       = "es"
+    Name       = "${var.project}-es-${var.env}"
+    env        = "${var.env}"
+    project    = "${var.project}"
+    customer   = "${var.customer}"
+  }
 }
 
 resource "aws_elasticsearch_domain_policy" "es" {
@@ -61,5 +63,3 @@ resource "aws_elasticsearch_domain_policy" "es" {
 }
 POLICIES
 }
-
-

@@ -16,10 +16,14 @@ shared:
 
 groups:
 
-- name: elk-((env))
+- name: ((project))-((env))
   jobs:
-  - terraform-plan-elk-((env))
-  - terraform-apply-elk-((env))
+  - terraform-plan
+  - terraform-apply
+- name: destroy
+  jobs:
+  - terraform-destroy
+
 
 resource_types:
 
@@ -30,99 +34,148 @@ resource_types:
 
 resources:
 
-- name: terraform-elk-((env))
+- name: tfstate
   type: terraform
   source:
     storage:
       bucket: ((terraform_storage_bucket_name))
       bucket_path: ((terraform_storage_bucket_path))
       region_name: ((aws_default_region))
-      access_key_id: ((terraform_storage_access_key))
-      secret_access_key: ((terraform_storage_secret_key))
+      access_key_id: ((aws_access_key))
+      secret_access_key: ((aws_secret_key))
     vars:
       access_key: ((aws_access_key))
       secret_key: ((aws_secret_key))
+      aws_region: ((aws_default_region))
+      env: ((env))
+      customer: ((customer))
+      project: ((project))
     env:
       AWS_ACCESS_KEY_ID: ((aws_access_key))
       AWS_DEFAULT_REGION: ((aws_default_region))
       AWS_SECRET_ACCESS_KEY: ((aws_secret_key))
 
-- name: stack-elk-terraform
+- name: git_stack-terraform
   type: git
   source:
     uri: https://github.com/cycloid-community-catalog/stack-amazon-elk
     branch: master
-    path: /terraform/
+    paths:
+    - terraform/*
 
-- name: stack-config-terraform
+
+- name: git_config-terraform
   type: git
   source:
-    uri: ((elk_config_git_repository))
-    branch: ((elk_config_git_branch))
-    private_key: ((elk_config_git_private_key))
-    path: /terraform/
+    uri: ((config_git_repository))
+    branch: ((config_git_branch))
+    private_key: ((config_git_private_key))
+    paths:
+    - ((project))/terraform/*
+
 
 jobs:
-  - name: terraform-plan-elk-((env))
+  - name: terraform-plan
     max_in_flight: 1
     build_logs_to_retain: 10
     plan:
       - do:
-        - get: stack-elk-terraform
+        - get: git_stack-terraform
           trigger: true
-        - get: stack-config-terraform
+        - get: git_config-terraform
           trigger: true
 
         - task: merge-stack-and-config
           config:
             <<: *merge-stack-and-config
             inputs:
-            - name: stack-config-terraform
+            - name: git_config-terraform
               path: "config"
-            - name: stack-elk-terraform
+            - name: git_stack-terraform
               path: "stack"
           params:
-            CONFIG_PATH: terraform/((env))
+            CONFIG_PATH: ((project))/terraform/((env))
             STACK_PATH: terraform
 
-        - put: terraform-elk-((env))
+        - put: tfstate
           params:
-            env_name: elk-((env))
+            env_name: ((project))-((env))
             plan_only: true
             terraform_source: merged-stack/
 
-  - name: terraform-apply-elk-((env))
+  - name: terraform-apply
     build_logs_to_retain: 10
     plan:
       - do:
         # Trigger false because of manual approval
-        - get: stack-elk-terraform
+        - get: git_stack-terraform
           trigger: false
           passed:
-            - terraform-plan-elk-((env))
-        - get: stack-config-terraform
+            - terraform-plan
+        - get: git_config-terraform
           trigger: false
           passed:
-            - terraform-plan-elk-((env))
-        - get: terraform-elk-((env))
+            - terraform-plan
+        - get: tfstate
           trigger: false
           passed:
-            - terraform-plan-elk-((env))
+            - terraform-plan
 
         - task: merge-stack-and-config
           config:
             <<: *merge-stack-and-config
             inputs:
-            - name: stack-config-terraform
+            - name: git_config-terraform
               path: "config"
-            - name: stack-elk-terraform
+            - name: git_stack-terraform
               path: "stack"
           params:
-            CONFIG_PATH: terraform/((env))
+            CONFIG_PATH: ((project))/terraform/((env))
             STACK_PATH: terraform
 
-        - put: terraform-elk-((env))
+        - put: tfstate
           params:
-            env_name: elk-((env))
+            env_name: ((project))-((env))
             run_plan: true
             terraform_source: merged-stack/
+
+  - name: terraform-destroy
+    build_logs_to_retain: 10
+    serial: True
+    max_in_flight: 1
+    plan:
+      - do:
+        # Trigger false because of manual approval
+        - get: git_stack-terraform
+          trigger: false
+          passed:
+            - terraform-plan
+        - get: git_config-terraform
+          trigger: false
+          passed:
+            - terraform-plan
+        - get: tfstate
+          trigger: false
+          passed:
+            - terraform-plan
+
+        - task: merge-stack-and-config
+          config:
+            <<: *merge-stack-and-config
+            inputs:
+            - name: git_config-terraform
+              path: "config"
+            - name: git_stack-terraform
+              path: "stack"
+          params:
+            CONFIG_PATH: ((project))/terraform/((env))
+            STACK_PATH: terraform
+
+        - put: tfstate
+          params:
+            env_name: ((project))-((env))
+            action: destroy
+            terraform_source: merged-stack/
+          get_params:
+            action: destroy
+
