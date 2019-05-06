@@ -24,4 +24,4 @@ config:
   terraform:
     elk:
       path: 'terraform/elk.tf.sample'
-      destination: 'terraform/elk/($ environment $)/elk.tf'
+      destination: '($ project $)/terraform/($ environment $)/elk.tf'

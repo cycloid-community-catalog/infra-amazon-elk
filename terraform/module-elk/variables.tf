@@ -1,17 +1,15 @@
 variable "allowed_secgroup" {
-    default = ""
+  default = ""
 }
 
 variable "env" {}
+variable "project" {}
+variable "customer" {}
 
 variable "vpc_id" {}
 
 variable "subnet_ids" {
-    type = "list"
-}
-
-variable "project" {
-  default = "elk"
+  type = "list"
 }
 
 variable "es_volume_size" {

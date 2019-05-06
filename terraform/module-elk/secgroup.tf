@@ -11,11 +11,12 @@ resource "aws_security_group" "es" {
   }
 
   tags {
-    engine  = "cycloid.io"
-    Name    = "${var.project}-es-${var.env}"
-    env     = "${var.env}"
-    project = "${var.project}"
-    role    = "es"
+    cycloid.io = "true"
+    Name       = "${var.project}-es-${var.env}"
+    env        = "${var.env}"
+    project    = "${var.project}"
+    customer   = "${var.customer}"
+    role       = "es"
   }
 }
 
@@ -28,4 +29,3 @@ resource "aws_security_group_rule" "allowed_secgroup" {
   source_security_group_id = "${var.allowed_secgroup}"
   security_group_id        = "${aws_security_group.es.id}"
 }
-
