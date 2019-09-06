@@ -13,7 +13,7 @@ variable "subnet_ids" {
 }
 
 variable "es_volume_size" {
-  default = 10
+  default = 15
 }
 
 variable "es_zone_awareness_enabled" {
@@ -21,7 +21,7 @@ variable "es_zone_awareness_enabled" {
 }
 
 variable "es_version" {
-  default = "6.0"
+  default = "7.1"
 }
 
 variable "es_instance_type" {
