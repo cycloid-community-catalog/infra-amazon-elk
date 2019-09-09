@@ -10,38 +10,34 @@ resource "aws_elasticsearch_domain" "es" {
   # EBS storage must be selected for t2.small.elasticsearch
   ebs_options {
     ebs_enabled = true
-    volume_size = "${var.es_volume_size}"
+    volume_size = var.es_volume_size
   }
 
-  elasticsearch_version = "${var.es_version}"
+  elasticsearch_version = var.es_version
 
   cluster_config {
-    instance_count         = "${var.es_instance_count}"
-    instance_type          = "${var.es_instance_type}"
-    zone_awareness_enabled = "${var.es_zone_awareness_enabled}"
+    instance_count         = var.es_instance_count
+    instance_type          = var.es_instance_type
+    zone_awareness_enabled = var.es_zone_awareness_enabled
   }
 
   snapshot_options {
-    automated_snapshot_start_hour = "${var.es_automated_snapshot_start_hour}"
+    automated_snapshot_start_hour = var.es_automated_snapshot_start_hour
   }
 
   vpc_options {
-    security_group_ids = ["${aws_security_group.es.id}"]
-    subnet_ids         = ["${var.subnet_ids}"]
+    security_group_ids = [aws_security_group.es.id]
+    subnet_ids         = var.subnet_ids
   }
 
-  tags {
-    cycloid.io = "true"
-    role       = "es"
-    Name       = "${var.project}-es-${var.env}"
-    env        = "${var.env}"
-    project    = "${var.project}"
-    customer   = "${var.customer}"
-  }
+  tags = merge(local.merged_tags, {
+    role = "es"
+    Name = "${var.project}-es-${var.env}"
+  })
 }
 
 resource "aws_elasticsearch_domain_policy" "es" {
-  domain_name = "${aws_elasticsearch_domain.es.domain_name}"
+  domain_name = aws_elasticsearch_domain.es.domain_name
 
   access_policies = <<POLICIES
 {
@@ -62,4 +58,5 @@ resource "aws_elasticsearch_domain_policy" "es" {
   ]
 }
 POLICIES
+
 }

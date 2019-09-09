@@ -2,14 +2,34 @@ variable "allowed_secgroup" {
   default = ""
 }
 
-variable "env" {}
-variable "project" {}
-variable "customer" {}
+variable "env" {
+}
 
-variable "vpc_id" {}
+variable "project" {
+}
+
+variable "customer" {
+}
+
+variable "vpc_id" {
+}
 
 variable "subnet_ids" {
-  type = "list"
+  type = list(string)
+}
+
+variable "extra_tags" {
+  default = {}
+}
+
+locals {
+  standard_tags = {
+    "cycloid.io" = "true"
+    env          = var.env
+    project      = var.project
+    client       = var.customer
+  }
+  merged_tags = merge(local.standard_tags, var.extra_tags)
 }
 
 variable "es_volume_size" {

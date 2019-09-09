@@ -70,6 +70,7 @@ In order to run this task, couple elements are required within the infrastructur
 |`extra_tags`|Dict of extra tags to add on aws resources. format { "foo" = "bar" }.|`-`|`{}`|`False`|
 |`subnet_ids`|Subnets to use for Amazon elasticsearch|`list`|``|`True`|
 |`vpc_id`|Amazon VPC id on which create each components.|`-`|``|`True`|
+|`extra_tags`|Dict of extra tags to add on aws resources. format { "foo" = "bar" }.|`-`|`{}`|`False`|
 
 
 **Outputs**
