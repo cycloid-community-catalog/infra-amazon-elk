@@ -1,6 +1,7 @@
 # Configuration of the CI pipeline
 name: 'Amazon Elasticsearch'
 canonical: 'infra-amazon-elk'
+status: 'public'
 description: 'Create an Amazon ELK infrastructure with Amazon ElasticSearch + Kibana.'
 keywords:
   - 'elasticsearch'
